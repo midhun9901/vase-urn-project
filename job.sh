@@ -16,10 +16,13 @@ cd /home/woody/iwi5/iwi5419h/vase_project
 echo "=== STEP 1: Split Data ==="
 python split_data.py
 
-echo "=== STEP 2: Extract Features ==="
+echo "=== STEP 2: Detect & Crop Figures (SAM) ==="
+python detect_crop.py
+
+echo "=== STEP 3: Extract Features (from crops) ==="
 python extract_features.py
 
-echo "=== STEP 3: Train (Triplet Loss) ==="
+echo "=== STEP 4: Train (Triplet Loss) ==="
 python train.py
 
 echo "=== STEP 4: Retrieve ==="
