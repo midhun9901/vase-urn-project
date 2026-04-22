@@ -19,13 +19,13 @@ python split_data.py
 echo "=== STEP 2: Extract Features ==="
 python extract_features.py
 
-echo "=== BASELINE (No Metric Learning) ==="
-python pipeline_baseline/retrieve.py
-python pipeline_baseline/evaluate.py
+echo "=== STEP 3: Train (Triplet Loss) ==="
+python train.py
 
-echo "=== METRIC LEARNING (Triplet Loss) ==="
-python pipeline_metric_learning/train.py
-python pipeline_metric_learning/retrieve.py
-python pipeline_metric_learning/evaluate.py
+echo "=== STEP 4: Retrieve ==="
+python retrieve.py
+
+echo "=== STEP 5: Evaluate ==="
+python evaluate.py
 
 echo "=== ALL DONE ==="
