@@ -1,0 +1,31 @@
+# Data and model artifacts
+data/
+logs/
+*.npy
+*.pth
+*.pt
+*.faiss
+*.index
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Pipeline outputs
+pipeline_baseline/
+pipeline_metric_learning/
