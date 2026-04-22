@@ -25,10 +25,10 @@ python extract_features.py
 echo "=== STEP 4: Train (Triplet Loss) ==="
 python train.py
 
-echo "=== STEP 4: Retrieve ==="
+echo "=== STEP 5: Retrieve ==="
 python retrieve.py
 
-echo "=== STEP 5: Evaluate ==="
+echo "=== STEP 6: Evaluate ==="
 python evaluate.py
 
 echo "=== ALL DONE ==="
