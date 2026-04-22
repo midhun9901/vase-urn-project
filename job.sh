@@ -7,6 +7,8 @@
 #SBATCH --error=vase_%j.err
 #SBATCH --export=NONE
 
+set -e
+
 unset SLURM_EXPORT_ENV
 module load python
 conda activate vaseretrieval

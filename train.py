@@ -1,5 +1,5 @@
 import os
-BASE = "/home/hpc/iwi5/iwi5419h/vase_urn_project" if os.path.exists("/home/hpc") else os.path.dirname(os.path.abspath(__file__))
+BASE = os.environ.get("VASE_PROJECT_DIR", os.path.dirname(os.path.abspath(__file__)))
 
 import torch
 import numpy as np

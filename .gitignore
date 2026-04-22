@@ -1,6 +1,13 @@
 # Data and model artifacts
 data/
 logs/
+runs/
+crops_remote/
+crop_review/
+crop_review_all/
+crop_review_summary.csv
+train_folders.txt
+test_folders.txt
 *.npy
 *.pth
 *.pt

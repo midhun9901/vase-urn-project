@@ -1,11 +1,24 @@
 import os
 import random
 
-BASE = "/home/hpc/iwi5/iwi5419h/vase_urn_project" if os.path.exists("/home/hpc") else os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(BASE, "data")
+BASE = os.environ.get("VASE_PROJECT_DIR", os.path.dirname(os.path.abspath(__file__)))
 
-pt1 = os.path.join(DATA, "pairs_pt1", "Bildpaare Teil 1")
-pt2 = os.path.join(DATA, "pairs_pt2", "Bildpaare-Triplets Teil 2")
+def first_existing(paths):
+    for path in paths:
+        if os.path.isdir(path):
+            return path
+    raise FileNotFoundError("None of these dataset paths exist:\n" + "\n".join(paths))
+
+pt1 = first_existing([
+    os.path.join(BASE, "data", "pairs_pt1", "Bildpaare Teil 1"),
+    os.path.join(BASE, "pairs_pt1 (1)", "Bildpaare Teil 1"),
+    os.path.join(BASE, "pairs_pt1", "Bildpaare Teil 1"),
+])
+pt2 = first_existing([
+    os.path.join(BASE, "data", "pairs_pt2", "Bildpaare-Triplets Teil 2"),
+    os.path.join(BASE, "pairs_pt2 (1)", "Bildpaare-Triplets Teil 2"),
+    os.path.join(BASE, "pairs_pt2", "Bildpaare-Triplets Teil 2"),
+])
 
 folders = []
 

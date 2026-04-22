@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 import torch
 
-BASE = "/home/hpc/iwi5/iwi5419h/vase_urn_project" if os.path.exists("/home/hpc") else os.path.dirname(os.path.abspath(__file__))
+BASE = os.environ.get("VASE_PROJECT_DIR", os.path.dirname(os.path.abspath(__file__)))
 CROPS_DIR = os.path.join(BASE, "crops")
 CHECKPOINT = os.path.join(BASE, "sam_vit_b.pth")
 
@@ -17,7 +17,7 @@ sam = sam_model_registry["vit_b"](checkpoint=CHECKPOINT)
 sam.to(device)
 mask_generator = SamAutomaticMaskGenerator(
     sam,
-    points_per_side=16,
+    points_per_side=8,
     pred_iou_thresh=0.88,
     stability_score_thresh=0.95,
     min_mask_region_area=500,
@@ -25,23 +25,41 @@ mask_generator = SamAutomaticMaskGenerator(
 print("SAM loaded.")
 
 
+def resize_for_sam(img_array, max_side=1024):
+    h, w = img_array.shape[:2]
+    if max(h, w) <= max_side:
+        return img_array
+    scale = max_side / max(h, w)
+    new_h, new_w = int(h * scale), int(w * scale)
+    return np.array(Image.fromarray(img_array).resize((new_w, new_h)))
+
+
 def get_crop(img_array):
     h, w = img_array.shape[:2]
-    total_area = h * w
 
-    masks = mask_generator.generate(img_array)
+    img_for_sam = resize_for_sam(img_array)
+    sh, sw = img_for_sam.shape[:2]
+    sam_area = sh * sw
 
-    # keep masks that are not too small and not the whole background
-    valid = [m for m in masks if 0.05 * total_area < m["area"] < 0.85 * total_area]
+    masks = mask_generator.generate(img_for_sam)
+    torch.cuda.empty_cache()
+
+    # filter on resized image area
+    valid = [m for m in masks if 0.05 * sam_area < m["area"] < 0.85 * sam_area]
 
     if not valid:
         return Image.fromarray(img_array)
 
-    # pick largest valid mask
+    # pick largest valid mask, scale bbox back to original image size
     best = max(valid, key=lambda m: m["area"])
     x, y, bw, bh = [int(v) for v in best["bbox"]]
+    scale_x = w / sw
+    scale_y = h / sh
+    x = int(x * scale_x)
+    y = int(y * scale_y)
+    bw = int(bw * scale_x)
+    bh = int(bh * scale_y)
 
-    # add small padding
     pad = 10
     x1 = max(0, x - pad)
     y1 = max(0, y - pad)
