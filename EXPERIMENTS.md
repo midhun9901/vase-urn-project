@@ -1,9 +1,33 @@
-# Experiment Results - V4 SAM Branch
+# Experiment Results - V5 DINOv2 Branch
 
 **Project:** CBIR for archaeological vase retrieval  
 **Supervisor:** Mathias Zinnen (FAU)  
-**Branch:** `v4-sam-triplet`  
+**Branch:** `v5-dinov2-retrieval`  
 **Last updated:** April 22, 2026
+
+---
+
+## Branch Purpose
+
+This branch is the clean V5 DINOv2 retrieval branch.
+
+It does not use SAM, crop files, `detect_crop.py`, or `sam_vit_b.pth`.
+
+V5 uses full original images:
+
+```text
+original image
+        -> DINOv2 feature extractor
+        -> optional Triplet Loss MLP
+        -> FAISS retrieval
+        -> full-ranking evaluation
+```
+
+The previous SAM experiment is preserved separately on:
+
+```text
+v4-sam-triplet
+```
 
 ---
 
@@ -11,53 +35,106 @@
 
 | Version | Description | Hardware | mAP | Acc@1 | Acc@10 |
 |---------|-------------|----------|-----|-------|--------|
-| V1 - Baseline | Raw ResNet50 features, no MLP, no metric learning | CPU | 30.27% | 23.08% | 76.92% |
-| V1 - Baseline | Raw ResNet50 features, no MLP, no metric learning | RTX 3050 (local) | 10.31% | 15.38% | 30.77% |
-| V2 - Triplet Loss | ResNet50 features + MLP + TripletMarginLoss + MultiSimilarityMiner | A100 GPU (TinyGPU) | **54.04%** | **42.31%** | **92.31%** |
-| V2 - Triplet Loss | ResNet50 features + MLP + TripletMarginLoss + MultiSimilarityMiner | RTX 3050 (local) | 44.67% | 34.62% | 90.38% |
-| V3 - ArcFace | ResNet50 features + MLP + ArcFaceLoss | RTX 3050 (local) | 31.14% | 26.92% | 75.00% |
-| V4 - SAM + Triplet | SAM crops + ResNet50 features + MLP + TripletMarginLoss | A100 GPU (TinyGPU) | 18.89% | 13.46% | 69.23% |
+| V1 - Baseline | Raw ResNet50 features, no MLP | RTX 3050 (local artifacts) | 10.31% | 15.38% | 30.77% |
+| V2 - ResNet50 + Triplet | ResNet50 features + MLP + Triplet Loss | RTX 3050 (local artifacts) | 44.67% | 34.62% | 90.38% |
+| V2 - ResNet50 + Triplet | ResNet50 features + MLP + Triplet Loss | A100 GPU (historic best) | 54.04% | 42.31% | 92.31% |
+| V5a - DINOv2 Full Image | DINOv2 features + FAISS full ranking | A100 GPU (TinyGPU) | 32.53% | 26.92% | 82.69% |
+| V5b - DINOv2 + Triplet | DINOv2 features + MLP + Triplet Loss | A100 GPU (TinyGPU) | **83.39%** | **80.77%** | **100.00%** |
+
+Main result:
+
+> V5b DINOv2 + Triplet Loss is the best current method with 83.39% mAP.
+
+Important fairness note:
+
+V5 uses a corrected full-ranking evaluator. Before the final report, older ResNet methods should be re-evaluated with the same full-ranking evaluator for the cleanest final comparison.
 
 ---
 
-## V4 SAM Summary
+## V5 Files
 
-V4 tested SAM as a zero-shot crop generator before the existing ResNet50 + Triplet Loss retrieval pipeline.
+| File/Folder | Purpose |
+|-------------|---------|
+| `pipeline_dinov2/` | DINOv2 feature extraction, training, retrieval, evaluation |
+| `job_v5_dinov2.sh` | TinyGPU SLURM job for V5a and V5b |
+| `demo_v5_dinov2.py` | Visual demo for V5a vs V5b |
+| `demo_all_versions.py` | Visual comparison of available saved result versions |
+| `runs/dinov2_full/` | V5a generated artifacts |
+| `runs/dinov2_triplet/` | V5b generated artifacts |
+
+`runs/` is ignored by git because it contains generated experiment artifacts.
+
+---
+
+## V5a - DINOv2 Full Image
 
 Pipeline:
 
 ```text
-split_data.py
-        -> detect_crop.py
-        -> extract_features.py
-        -> train.py
-        -> retrieve.py
-        -> evaluate.py
+image -> DINOv2 ViT-S/14 feature -> L2 normalize -> FAISS -> evaluate
 ```
 
-Valid SAM job:
+Result:
 
 ```text
-Job ID: 1581893
-Crops created: 250
-mAP: 18.89%
-Accuracy@1: 13.46%
-Accuracy@10: 69.23%
+mAP        : 0.3253
+Accuracy@1 : 26.92%
+Accuracy@10: 82.69%
 ```
 
-Important correction:
+Interpretation:
 
-The earlier job `1581869` is not a valid SAM result because `detect_crop.py` failed when OpenCV (`cv2`) was missing. The job continued without crops because the old `job.sh` did not stop on errors.
+> DINOv2 features alone are useful but not enough to beat the previous ResNet50 + Triplet method.
 
-Fixes made:
+---
 
-- Installed compatible OpenCV in the `vaseretrieval` conda environment.
-- Restored NumPy below 2.0 for FAISS compatibility.
-- Added `set -e` to `job.sh`.
-- Reran SAM as job `1581893`.
+## V5b - DINOv2 + Triplet
 
-Conclusion:
+Pipeline:
 
-> SAM cropping worked technically, but it reduced retrieval performance. Many crops were visually plausible, but the crop step likely removed useful full-vase context or produced inconsistent crop regions across matching pairs.
+```text
+image -> DINOv2 ViT-S/14 feature -> MLP 384 -> 512 -> 128 -> Triplet Loss -> FAISS -> evaluate
+```
 
-SAM is therefore documented as a negative/analysis experiment, not used as the final retrieval method.
+Result:
+
+```text
+mAP        : 0.8339
+Accuracy@1 : 80.77%
+Accuracy@10: 100.00%
+```
+
+Interpretation:
+
+> DINOv2 provides a stronger visual representation than ResNet50, and Triplet Loss successfully adapts those features to the vase retrieval task.
+
+---
+
+## TinyGPU Run
+
+Valid V5 job:
+
+```text
+Job ID: 1581942
+```
+
+DINOv2 had to be cached on the login node because compute nodes could not access GitHub:
+
+```text
+/home/woody/iwi5/iwi5419h/torch_cache
+```
+
+Run:
+
+```bash
+cd /home/woody/iwi5/iwi5419h/vase_project
+sbatch.tinygpu job_v5_dinov2.sh
+```
+
+---
+
+## Professor Explanation
+
+Short explanation:
+
+> V5 removes the SAM crop step and returns to full original images. Instead of changing the input image, it improves the feature representation by replacing ResNet50 with DINOv2. DINOv2 alone achieved 32.53% mAP, but DINOv2 features combined with Triplet Loss achieved 83.39% mAP, making it the strongest current method.

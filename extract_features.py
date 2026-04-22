@@ -1,6 +1,5 @@
 import os
 BASE = os.environ.get("VASE_PROJECT_DIR", os.path.dirname(os.path.abspath(__file__)))
-CROPS_DIR = os.path.join(BASE, "crops")
 
 import torch
 import torchvision.models as models
@@ -30,12 +29,8 @@ def extract(folders):
             if not file.lower().endswith((".jpg", ".jpeg", ".png")):
                 continue
             path = os.path.join(folder, file)
-            # use SAM crop if available, otherwise full image
-            rel = os.path.relpath(path, BASE)
-            crop_path = os.path.join(CROPS_DIR, rel)
-            load_path = crop_path if os.path.exists(crop_path) else path
             try:
-                img = Image.open(load_path).convert("RGB")
+                img = Image.open(path).convert("RGB")
                 img = transform(img).unsqueeze(0).to(device)
                 with torch.no_grad():
                     feat = model(img).squeeze().cpu().numpy()
