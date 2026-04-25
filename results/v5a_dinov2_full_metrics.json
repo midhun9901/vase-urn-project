@@ -1,0 +1,8 @@
+{
+  "version": "V5a",
+  "description": "DINOv2 ViT-S/14 full-image features, no fine-tuning",
+  "evaluator": "full-ranking (corrected)",
+  "mAP": 0.32531021861259546,
+  "Accuracy@1": 26.923076923076923,
+  "Accuracy@10": 82.6923076923077
+}
