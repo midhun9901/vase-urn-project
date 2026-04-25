@@ -1,5 +1,5 @@
 {
-  "version": "V5b",
+  "version": "V6b",
   "description": "DINOv2 ViT-S/14 + MLP (384→512→128) + Triplet Loss",
   "evaluator": "full-ranking (corrected)",
   "mAP": 0.8338948551448552,
