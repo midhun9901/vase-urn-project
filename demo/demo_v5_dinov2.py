@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image, ImageTk
 
 
-BASE = Path(__file__).resolve().parent
+BASE = Path(__file__).resolve().parent.parent
 RUN_FULL = BASE / "runs" / "dinov2_full"
 RUN_TRIPLET = BASE / "runs" / "dinov2_triplet"
 

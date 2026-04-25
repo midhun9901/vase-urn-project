@@ -16,7 +16,7 @@ from tkinter import ttk, font as tkfont
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 import threading
 
-BASE = os.path.dirname(os.path.abspath(__file__))
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ── Colours (Catppuccin Mocha palette) ────────────────────────────────────────
 BG       = "#1e1e2e"

@@ -7,22 +7,22 @@ import os
 import queue as Queue
 
 # ── CONFIG ─────────────────────────────────────────────────────────────────────
-LOCAL_PROJECT = os.path.dirname(os.path.abspath(__file__))
+LOCAL_PROJECT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = {
-    "train.py":            "python train.py",
-    "evaluate.py":         "python evaluate.py",
-    "extract_features.py": "python extract_features.py",
-    "retrieve.py":         "python retrieve.py",
-    "split_data.py":       "python split_data.py",
+    "v5_dinov2/train.py":            "python v5_dinov2/train.py",
+    "v5_dinov2/evaluate.py":         "python v5_dinov2/evaluate.py",
+    "v5_dinov2/extract_features.py": "python v5_dinov2/extract_features.py",
+    "v5_dinov2/retrieve.py":         "python v5_dinov2/retrieve.py",
+    "tools/split_data.py":           "python tools/split_data.py",
 }
 
 # Full pipeline in execution order
 PIPELINE = [
-    "split_data.py",
-    "extract_features.py",
-    "train.py",
-    "retrieve.py",
-    "evaluate.py",
+    "tools/split_data.py",
+    "v5_dinov2/extract_features.py",
+    "v5_dinov2/train.py",
+    "v5_dinov2/retrieve.py",
+    "v5_dinov2/evaluate.py",
 ]
 LOG_DIR = os.path.join(LOCAL_PROJECT, "logs")
 # ───────────────────────────────────────────────────────────────────────────────

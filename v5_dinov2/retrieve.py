@@ -1,5 +1,4 @@
 import argparse
-from pathlib import Path
 
 import faiss
 import numpy as np
@@ -10,9 +9,9 @@ from common import l2_normalize, project_root
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run FAISS retrieval for DINOv2 features.")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", default="runs/dinov2_full")
-    parser.add_argument("--model-path", default=None, help="Optional MLP model path for Triplet embeddings.")
+    parser.add_argument("--model-path", default=None)
     return parser.parse_args()
 
 

@@ -1,6 +1,5 @@
 import argparse
 import os
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -11,7 +10,7 @@ from common import image_files, load_or_create_split, project_root, save_paths
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Extract DINOv2 features for vase retrieval.")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", default="runs/dinov2_full")
     parser.add_argument("--model-name", default="dinov2_vits14")
     parser.add_argument("--batch-size", type=int, default=16)
@@ -22,8 +21,7 @@ def parse_args():
 def load_model(model_name, device):
     print(f"Loading DINOv2 model: {model_name}")
     model = torch.hub.load("facebookresearch/dinov2", model_name)
-    model.eval()
-    model.to(device)
+    model.eval().to(device)
     return model
 
 

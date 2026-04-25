@@ -8,12 +8,12 @@ import numpy as np
 SEED = 42
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 
-
 def project_root():
     return Path(os.environ.get("VASE_PROJECT_DIR", Path(__file__).resolve().parents[1]))
 
 
 def first_existing(paths):
+    # cluster mounts things differently depending on the node
     for path in paths:
         if path.is_dir():
             return path
@@ -64,8 +64,8 @@ def image_files(folder):
 
 
 def l2_normalize(x, eps=1e-12):
-    return x / np.maximum(np.linalg.norm(x, axis=1, keepdims=True), eps)
-
+    norms = np.linalg.norm(x, axis=1, keepdims=True)
+    return x / np.maximum(norms, eps)
 
 def save_paths(path, paths):
     Path(path).write_text("\n".join(str(p) for p in paths), encoding="utf-8")
@@ -95,8 +95,6 @@ def compute_metrics(indices, labels):
             if lbl == query_label:
                 correct += 1
                 precision_sum += correct / (rank + 1)
-                if correct == total_relevant:
-                    break
 
         ap_list.append(precision_sum / total_relevant if total_relevant > 0 else 0.0)
 

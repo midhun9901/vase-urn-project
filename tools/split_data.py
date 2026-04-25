@@ -1,7 +1,7 @@
 import os
 import random
 
-BASE = os.environ.get("VASE_PROJECT_DIR", os.path.dirname(os.path.abspath(__file__)))
+BASE = os.environ.get("VASE_PROJECT_DIR", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def first_existing(paths):
     for path in paths:

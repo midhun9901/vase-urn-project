@@ -24,7 +24,7 @@ class EmbeddingDataset(Dataset):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train Triplet MLP on DINOv2 features.")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", default="runs/dinov2_triplet")
     parser.add_argument("--output-dir", default="runs/dinov2_triplet")
     parser.add_argument("--epochs", type=int, default=80)
@@ -42,6 +42,7 @@ def main():
     out_dir = base / args.output_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # reproducibility
     random.seed(SEED)
     np.random.seed(SEED)
     torch.manual_seed(SEED)
@@ -75,6 +76,7 @@ def main():
 
     loss_fn = losses.TripletMarginLoss()
     miner = miners.MultiSimilarityMiner()
+    # TODO: try ProxyAnchor here
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     for epoch in range(args.epochs):

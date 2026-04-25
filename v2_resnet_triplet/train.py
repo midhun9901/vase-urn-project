@@ -1,5 +1,5 @@
 import os
-BASE = os.environ.get("VASE_PROJECT_DIR", os.path.dirname(os.path.abspath(__file__)))
+BASE = "/home/hpc/iwi5/iwi5419h/vase_urn_project" if os.path.exists("/home/hpc") else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 import torch
 import numpy as np
@@ -35,6 +35,7 @@ g = torch.Generator()
 g.manual_seed(SEED)
 loader = DataLoader(dataset, batch_size=32, shuffle=True, generator=g)
 
+# MLP: 2048 → 512 → 128
 model = nn.Sequential(
     nn.Linear(2048, 512),
     nn.ReLU(),

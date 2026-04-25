@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image, ImageTk
 
 
-BASE = Path(__file__).resolve().parent
+BASE = Path(__file__).resolve().parent.parent
 THUMB_W = 154
 THUMB_H = 120
 TOP_K = 9

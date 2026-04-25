@@ -1,5 +1,5 @@
 import os
-BASE = "/home/hpc/iwi5/iwi5419h/vase_urn_project" if os.path.exists("/home/hpc") else os.path.dirname(os.path.abspath(__file__))
+BASE = "/home/hpc/iwi5/iwi5419h/vase_urn_project" if os.path.exists("/home/hpc") else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 import numpy as np
@@ -47,7 +47,7 @@ def compute_metrics(indices, labels):
 print("Computing baseline metrics...")
 mAP, acc1, acc10 = compute_metrics(indices, labels)
 
-print(f"--- BASELINE (No Metric Learning) ---")
+print(f"--- BASELINE (Raw ResNet50, No Metric Learning) ---")
 print(f"mAP        : {mAP:.4f}")
 print(f"Accuracy@1 : {acc1:.2f}%")
 print(f"Accuracy@10: {acc10:.2f}%")
