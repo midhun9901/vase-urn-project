@@ -18,12 +18,12 @@ cd /home/woody/iwi5/iwi5419h/vase_project
 echo "=== V1: Raw ResNet50 Baseline ==="
 
 echo "=== STEP 1: Extract Features ==="
-python v1_baseline/extract_features.py
+python v1_baseline/extract_features.py --output-dir runs/v1
 
-echo "=== STEP 2: Retrieve (baseline) ==="
-python v1_baseline/retrieve_baseline.py
+echo "=== STEP 2: Retrieve (full ranking, no model) ==="
+python v1_baseline/retrieve.py --input-dir runs/v1
 
 echo "=== STEP 3: Evaluate ==="
-python v1_baseline/evaluate_baseline.py
+python v1_baseline/evaluate.py --input-dir runs/v1
 
 echo "=== V1 DONE ==="

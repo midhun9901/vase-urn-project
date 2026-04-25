@@ -1,66 +1,100 @@
-import os
-BASE = os.environ.get("VASE_PROJECT_DIR", os.path.dirname(os.path.abspath(__file__)))
-CROPS_DIR = os.path.join(BASE, "crops")
+import argparse
 
+import numpy as np
 import torch
 import torchvision.models as models
 import torchvision.transforms as transforms
 from PIL import Image
-import numpy as np
 
-model = models.resnet50(pretrained=True)
-model = torch.nn.Sequential(*list(model.children())[:-1])
-model.eval()
+from common import image_files, load_or_create_split, project_root, save_paths
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
-print(f"Using: {device}")
 
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-dir", default="runs/v5")
+    parser.add_argument("--crops-dir", default="runs/v5/crops")
+    parser.add_argument("--batch-size", type=int, default=16)
+    return parser.parse_args()
 
-def extract(folders):
-    embeddings = []
-    labels = []
+
+def load_model(device):
+    print("Loading ResNet50 (pretrained, no classifier head)")
+    base = models.resnet50(pretrained=True)
+    model = torch.nn.Sequential(*list(base.children())[:-1])
+    model.eval().to(device)
+    return model
+
+
+def extract_split(model, folders, base, crops_dir, device, batch_size):
+    transform = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ])
+
+    embeddings, labels, paths = [], [], []
+    batch, batch_labels, batch_paths = [], [], []
+
+    def flush():
+        if not batch:
+            return
+        tensor = torch.stack(batch).to(device)
+        with torch.no_grad():
+            feats = model(tensor).squeeze(-1).squeeze(-1)
+        embeddings.extend(feats.detach().cpu().numpy())
+        labels.extend(batch_labels)
+        paths.extend(batch_paths)
+        batch.clear(); batch_labels.clear(); batch_paths.clear()
+
     for label, folder in enumerate(folders):
-        for file in os.listdir(folder):
-            if not file.lower().endswith((".jpg", ".jpeg", ".png")):
-                continue
-            path = os.path.join(folder, file)
-            # use SAM crop if available, otherwise full image
-            rel = os.path.relpath(path, BASE)
-            crop_path = os.path.join(CROPS_DIR, rel)
-            load_path = crop_path if os.path.exists(crop_path) else path
+        for img_path in image_files(folder):
+            rel = img_path.relative_to(base)
+            crop_path = crops_dir / rel
+            load_path = crop_path if crop_path.exists() else img_path
             try:
                 img = Image.open(load_path).convert("RGB")
-                img = transform(img).unsqueeze(0).to(device)
-                with torch.no_grad():
-                    feat = model(img).squeeze().cpu().numpy()
-                embeddings.append(feat)
-                labels.append(label)
+                batch.append(transform(img))
+                batch_labels.append(label)
+                batch_paths.append(img_path)
+                if len(batch) >= batch_size:
+                    flush()
             except Exception as e:
-                print(f"Skipped {path}: {e}")
-    return np.array(embeddings), np.array(labels)
+                print(f"Skipped {img_path}: {e}")
+    flush()
+    return np.asarray(embeddings, dtype=np.float32), np.asarray(labels, dtype=np.int64), paths
 
-with open(os.path.join(BASE, "train_folders.txt")) as f:
-    train_folders = f.read().splitlines()
 
-with open(os.path.join(BASE, "test_folders.txt")) as f:
-    test_folders = f.read().splitlines()
+def main():
+    args = parse_args()
+    base = project_root()
+    out = base / args.output_dir
+    crops_dir = base / args.crops_dir
+    out.mkdir(parents=True, exist_ok=True)
 
-print("Extracting train features...")
-train_emb, train_lbl = extract(train_folders)
-np.save(os.path.join(BASE, "train_embeddings.npy"), train_emb)
-np.save(os.path.join(BASE, "train_labels.npy"), train_lbl)
-print(f"Train: {train_emb.shape}")
+    train_folders, test_folders = load_or_create_split(base)
+    print(f"Train: {len(train_folders)} | Test: {len(test_folders)}")
 
-print("Extracting test features...")
-test_emb, test_lbl = extract(test_folders)
-np.save(os.path.join(BASE, "test_embeddings.npy"), test_emb)
-np.save(os.path.join(BASE, "test_labels.npy"), test_lbl)
-print(f"Test: {test_emb.shape}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using: {device}")
+    model = load_model(device)
 
-print("Done! Embeddings saved.")
+    print("Extracting train features (from SAM crops where available)...")
+    train_emb, train_lbl, train_paths = extract_split(model, train_folders, base, crops_dir, device, args.batch_size)
+    np.save(out / "train_embeddings.npy", train_emb)
+    np.save(out / "train_labels.npy", train_lbl)
+    save_paths(out / "train_image_paths.txt", train_paths)
+    print(f"Train embeddings: {train_emb.shape}")
+
+    print("Extracting test features (from SAM crops where available)...")
+    test_emb, test_lbl, test_paths = extract_split(model, test_folders, base, crops_dir, device, args.batch_size)
+    np.save(out / "test_embeddings.npy", test_emb)
+    np.save(out / "test_labels.npy", test_lbl)
+    save_paths(out / "test_image_paths.txt", test_paths)
+    print(f"Test embeddings: {test_emb.shape}")
+
+    print(f"Done. Features saved to: {out}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,40 +1,63 @@
-import os
-BASE = "/home/hpc/iwi5/iwi5419h/vase_urn_project" if os.path.exists("/home/hpc") else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+import argparse
 
-import torch
-import numpy as np
 import faiss
+import numpy as np
+import torch
 from torch import nn
 
-print("Loading embeddings...")
-test_emb = np.load(os.path.join(BASE, "test_embeddings.npy"))
-test_lbl = np.load(os.path.join(BASE, "test_labels.npy"))
+from common import l2_normalize, project_root
 
-print("Loading trained MLP model...")
-model = nn.Sequential(
-    nn.Linear(2048, 512),
-    nn.ReLU(),
-    nn.Linear(512, 128)
-)
-model.load_state_dict(torch.load(os.path.join(BASE, "model.pth")))
-model.eval()
 
-print("Running embeddings through trained MLP (2048 → 128)...")
-with torch.no_grad():
-    refined = model(torch.tensor(test_emb, dtype=torch.float32)).numpy()
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input-dir", default="runs/v2")
+    parser.add_argument("--model-path", default=None)
+    return parser.parse_args()
 
-# Normalize for cosine similarity
-refined = refined / np.linalg.norm(refined, axis=1, keepdims=True)
 
-print("Building FAISS index (128-dim, metric learning embeddings)...")
-index = faiss.IndexFlatL2(128)
-index.add(refined)
-print(f"FAISS index built with {index.ntotal} vectors")
+def load_projection(model_path, input_dim):
+    checkpoint = torch.load(model_path, map_location="cpu")
+    output_dim = int(checkpoint.get("output_dim", 128))
+    hidden_dim = int(checkpoint.get("hidden_dim", 512))
+    model = nn.Sequential(
+        nn.Linear(input_dim, hidden_dim),
+        nn.ReLU(),
+        nn.Linear(hidden_dim, output_dim),
+    )
+    model.load_state_dict(checkpoint["model"])
+    model.eval()
+    return model
 
-print("Searching...")
-D, I = index.search(refined, k=10)
 
-np.save(os.path.join(BASE, "retrieval_indices.npy"), I)
-np.save(os.path.join(BASE, "retrieval_labels.npy"), test_lbl)
-print("Done! Retrieval results saved.")
+def main():
+    args = parse_args()
+    base = project_root()
+    run_dir = base / args.input_dir
+
+    test_emb = np.load(run_dir / "test_embeddings.npy").astype("float32")
+    test_lbl = np.load(run_dir / "test_labels.npy")
+
+    if args.model_path:
+        print(f"Applying projection model: {args.model_path}")
+        model = load_projection(base / args.model_path, test_emb.shape[1])
+        with torch.no_grad():
+            test_emb = model(torch.tensor(test_emb, dtype=torch.float32)).numpy().astype("float32")
+
+    test_emb = l2_normalize(test_emb).astype("float32")
+
+    print("Building FAISS index...")
+    index = faiss.IndexFlatL2(test_emb.shape[1])
+    index.add(test_emb)
+    print(f"FAISS index built with {index.ntotal} vectors")
+
+    print("Searching full test ranking...")
+    distances, indices = index.search(test_emb, k=len(test_emb))
+
+    np.save(run_dir / "retrieval_distances.npy", distances)
+    np.save(run_dir / "retrieval_indices.npy", indices)
+    np.save(run_dir / "retrieval_labels.npy", test_lbl)
+    print(f"Done. Retrieval results saved to: {run_dir}")
+
+
+if __name__ == "__main__":
+    main()

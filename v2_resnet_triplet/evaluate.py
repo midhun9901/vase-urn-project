@@ -1,54 +1,33 @@
-import os
-BASE = "/home/hpc/iwi5/iwi5419h/vase_urn_project" if os.path.exists("/home/hpc") else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+import argparse
+import json
 
 import numpy as np
 
-print("Loading metric learning retrieval results...")
-indices = np.load(os.path.join(BASE, "retrieval_indices.npy"))
-labels = np.load(os.path.join(BASE, "retrieval_labels.npy"))
+from common import compute_metrics, project_root
 
-def compute_metrics(indices, labels):
-    n = len(labels)
-    ap_list = []
-    acc1 = 0
-    acc10 = 0
 
-    for i in range(n):
-        query_label = labels[i]
-        ranked = indices[i]
-        ranked_labels = labels[ranked[1:]]
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input-dir", default="runs/v2")
+    return parser.parse_args()
 
-        if ranked_labels[0] == query_label:
-            acc1 += 1
 
-        if query_label in ranked_labels[:10]:
-            acc10 += 1
+def main():
+    args = parse_args()
+    run_dir = project_root() / args.input_dir
 
-        correct = 0
-        precision_sum = 0
-        for rank, lbl in enumerate(ranked_labels):
-            if lbl == query_label:
-                correct += 1
-                precision_sum += correct / (rank + 1)
+    indices = np.load(run_dir / "retrieval_indices.npy")
+    labels = np.load(run_dir / "retrieval_labels.npy")
+    metrics = compute_metrics(indices, labels)
 
-        total_relevant = np.sum(labels == query_label) - 1
-        if total_relevant > 0:
-            ap_list.append(precision_sum / total_relevant)
-        else:
-            ap_list.append(0.0)
+    print(f"mAP        : {metrics['mAP']:.4f}")
+    print(f"Accuracy@1 : {metrics['Accuracy@1']:.2f}%")
+    print(f"Accuracy@10: {metrics['Accuracy@10']:.2f}%")
 
-    mAP = np.mean(ap_list)
-    acc1 = acc1 / n * 100
-    acc10 = acc10 / n * 100
+    out = run_dir / "metrics.json"
+    out.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    print(f"saved to {out}")
 
-    return mAP, acc1, acc10
 
-print("Computing metric learning metrics...")
-mAP, acc1, acc10 = compute_metrics(indices, labels)
-
-print(f"--- METRIC LEARNING (ResNet50 + MLP + Triplet Loss) ---")
-print(f"mAP        : {mAP:.4f}")
-print(f"Accuracy@1 : {acc1:.2f}%")
-print(f"Accuracy@10: {acc10:.2f}%")
-print("Metric learning evaluation done!")
+if __name__ == "__main__":
+    main()
