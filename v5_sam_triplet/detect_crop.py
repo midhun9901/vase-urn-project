@@ -23,11 +23,17 @@ def get_crop(img_array, mask_generator):
     h, w = img_array.shape[:2]
     total_area = h * w
     masks = mask_generator.generate(img_array)
-    valid = [m for m in masks if 0.05 * total_area < m["area"] < 0.85 * total_area]
+    valid = []
+    for m in masks:
+        if 0.05 * total_area < m["area"] < 0.85 * total_area:
+            valid.append(m)
     if not valid:
         return Image.fromarray(img_array)
     best = max(valid, key=lambda m: m["area"])
-    x, y, bw, bh = [int(v) for v in best["bbox"]]
+    bbox_ints = []
+    for v in best["bbox"]:
+        bbox_ints.append(int(v))
+    x, y, bw, bh = bbox_ints
     pad = 10
     x1, y1 = max(0, x - pad), max(0, y - pad)
     x2, y2 = min(w, x + bw + pad), min(h, y + bh + pad)
@@ -38,7 +44,10 @@ def crop_folder(folder, base, crops_dir, mask_generator):
     rel = Path(folder).relative_to(base)
     out_folder = crops_dir / rel
     out_folder.mkdir(parents=True, exist_ok=True)
-    files = [f for f in Path(folder).iterdir() if f.suffix.lower() in {".jpg", ".jpeg", ".png"}]
+    files = []
+    for f in Path(folder).iterdir():
+        if f.suffix.lower() in {".jpg", ".jpeg", ".png"}:
+            files.append(f)
     for f in files:
         out_path = out_folder / f.name
         if out_path.exists():

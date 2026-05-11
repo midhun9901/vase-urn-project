@@ -75,7 +75,8 @@ def main():
 
     for epoch in range(args.epochs):
         model.train()
-        total_loss, batches = 0.0, 0
+        total_loss = 0.0
+        batches = 0
         for emb, lbl in loader:
             emb, lbl = emb.to(device), lbl.to(device)
             output = F.normalize(model(emb), p=2, dim=1)

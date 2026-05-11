@@ -37,7 +37,12 @@ def dataset_roots(base):
 def make_split(base):
     folders = []
     for root in dataset_roots(base):
-        folders.extend(sorted([p for p in root.iterdir() if p.is_dir()], key=lambda p: p.name))
+        root_folders = []
+        for p in root.iterdir():
+            if p.is_dir():
+                root_folders.append(p)
+        root_folders = sorted(root_folders, key=lambda p: p.name)
+        folders.extend(root_folders)
 
     random.seed(SEED)
     random.shuffle(folders)
@@ -49,8 +54,16 @@ def load_or_create_split(base):
     train_file = base / "train_folders.txt"
     test_file = base / "test_folders.txt"
     if train_file.exists() and test_file.exists():
-        train = [Path(line.strip()) for line in train_file.read_text(encoding="utf-8").splitlines() if line.strip()]
-        test = [Path(line.strip()) for line in test_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+        train = []
+        for line in train_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                train.append(Path(line))
+        test = []
+        for line in test_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                test.append(Path(line))
         return train, test
 
     train, test = make_split(base)
@@ -60,7 +73,11 @@ def load_or_create_split(base):
 
 
 def image_files(folder):
-    return sorted([p for p in folder.iterdir() if p.suffix.lower() in IMAGE_EXTS], key=lambda p: p.name.lower())
+    images = []
+    for p in folder.iterdir():
+        if p.suffix.lower() in IMAGE_EXTS:
+            images.append(p)
+    return sorted(images, key=lambda p: p.name.lower())
 
 
 def l2_normalize(x, eps=1e-12):
@@ -79,7 +96,10 @@ def compute_metrics(indices, labels):
 
     for i in range(n):
         query_label = labels[i]
-        ranked = [idx for idx in indices[i] if idx != i]
+        ranked = []
+        for idx in indices[i]:
+            if idx != i:
+                ranked.append(idx)
         ranked_labels = labels[ranked]
 
         if len(ranked_labels) and ranked_labels[0] == query_label:
@@ -96,7 +116,10 @@ def compute_metrics(indices, labels):
                 correct += 1
                 precision_sum += correct / (rank + 1)
 
-        ap_list.append(precision_sum / total_relevant if total_relevant > 0 else 0.0)
+        if total_relevant > 0:
+            ap_list.append(precision_sum / total_relevant)
+        else:
+            ap_list.append(0.0)
 
     return {
         "mAP": float(np.mean(ap_list)),

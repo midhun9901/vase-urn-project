@@ -27,7 +27,12 @@ ORANGE = "#ad5f13"
 
 
 def read_lines(path):
-    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    lines = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            lines.append(line)
+    return lines
 
 
 def load_metrics(path):
@@ -37,10 +42,11 @@ def load_metrics(path):
 
 
 def image_files(folder):
-    return sorted(
-        [p for p in Path(folder).iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"}],
-        key=lambda p: p.name.lower(),
-    )
+    images = []
+    for p in Path(folder).iterdir():
+        if p.suffix.lower() in {".jpg", ".jpeg", ".png"}:
+            images.append(p)
+    return sorted(images, key=lambda p: p.name.lower())
 
 
 def build_paths_from_test_folders():
@@ -104,7 +110,10 @@ def compute_metrics(indices, labels):
     acc10 = 0
     for i in range(n):
         query_label = labels[i]
-        ranked = [idx for idx in indices[i] if idx != i]
+        ranked = []
+        for idx in indices[i]:
+            if idx != i:
+                ranked.append(idx)
         ranked_labels = labels[ranked]
         if len(ranked_labels) and ranked_labels[0] == query_label:
             acc1 += 1
@@ -119,7 +128,10 @@ def compute_metrics(indices, labels):
                 precision_sum += correct / (rank + 1)
                 if correct == total_relevant:
                     break
-        ap_list.append(precision_sum / total_relevant if total_relevant else 0.0)
+        if total_relevant:
+            ap_list.append(precision_sum / total_relevant)
+        else:
+            ap_list.append(0.0)
     return {"mAP": float(np.mean(ap_list)), "Accuracy@1": acc1 / n * 100, "Accuracy@10": acc10 / n * 100}
 
 
@@ -166,7 +178,10 @@ def load_methods():
             run_dir / "test_image_paths.txt",
         ]
         if all(p.exists() for p in required):
-            paths = [resolve_image_path(p) for p in read_lines(run_dir / "test_image_paths.txt")]
+            raw_paths = read_lines(run_dir / "test_image_paths.txt")
+            paths = []
+            for p in raw_paths:
+                paths.append(resolve_image_path(p))
             labels = np.load(run_dir / "retrieval_labels.npy")
             indices = np.load(run_dir / "retrieval_indices.npy")
             methods.append({
@@ -190,7 +205,10 @@ def metric_text(metrics):
 
 def query_metrics(indices, labels, query_idx, shown_k=TOP_K):
     query_label = labels[query_idx]
-    ranked = [idx for idx in indices[query_idx] if idx != query_idx]
+    ranked = []
+    for idx in indices[query_idx]:
+        if idx != query_idx:
+            ranked.append(idx)
     ranked_labels = labels[ranked]
 
     top1 = bool(len(ranked_labels) and ranked_labels[0] == query_label)
@@ -206,7 +224,10 @@ def query_metrics(indices, labels, query_idx, shown_k=TOP_K):
             precision_sum += correct / (rank + 1)
             if correct == total_relevant:
                 break
-    ap = precision_sum / total_relevant if total_relevant else 0.0
+    if total_relevant:
+        ap = precision_sum / total_relevant
+    else:
+        ap = 0.0
 
     return {
         "top1": top1,
@@ -245,7 +266,10 @@ class AllVersionsDemo:
 
         self.query_var = tk.StringVar()
         self.query_box = ttk.Combobox(nav, textvariable=self.query_var, state="readonly", width=75)
-        self.query_box["values"] = [self.short_name(p, i) for i, p in enumerate(self.primary["paths"])]
+        query_names = []
+        for i, p in enumerate(self.primary["paths"]):
+            query_names.append(self.short_name(p, i))
+        self.query_box["values"] = query_names
         self.query_box.current(0)
         self.query_box.pack(side="left", padx=8)
         self.query_box.bind("<<ComboboxSelected>>", self.on_select)
@@ -328,7 +352,11 @@ class AllVersionsDemo:
         return self.query_idx if self.query_idx < len(method["paths"]) else 0
 
     def non_self_results(self, method, qidx):
-        return [idx for idx in method["indices"][qidx] if idx != qidx][:TOP_K]
+        results = []
+        for idx in method["indices"][qidx]:
+            if idx != qidx:
+                results.append(idx)
+        return results[:TOP_K]
 
     def render(self):
         path = self.primary["paths"][self.query_idx]

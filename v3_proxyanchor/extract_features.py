@@ -19,7 +19,7 @@ def parse_args():
 
 def load_model(device):
     print("Loading ResNet50 (pretrained, no classifier head)")
-    base = models.resnet50(pretrained=True)
+    base = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
     model = torch.nn.Sequential(*list(base.children())[:-1])
     model.eval().to(device)
     return model

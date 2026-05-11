@@ -28,7 +28,12 @@ RED = "#a13a2f"
 
 
 def read_lines(path):
-    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    lines = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            lines.append(line)
+    return lines
 
 
 def load_metrics(run_dir):
@@ -67,11 +72,17 @@ def load_data():
         RUN_TRIPLET / "retrieval_indices.npy",
         RUN_TRIPLET / "retrieval_labels.npy",
     ]
-    missing = [str(p) for p in required if not p.exists()]
+    missing = []
+    for p in required:
+        if not p.exists():
+            missing.append(str(p))
     if missing:
         raise FileNotFoundError("Missing V5 run files:\n" + "\n".join(missing))
 
-    paths = [resolve_image_path(p) for p in read_lines(RUN_FULL / "test_image_paths.txt")]
+    raw_paths = read_lines(RUN_FULL / "test_image_paths.txt")
+    paths = []
+    for p in raw_paths:
+        paths.append(resolve_image_path(p))
     full_indices = np.load(RUN_FULL / "retrieval_indices.npy")
     triplet_indices = np.load(RUN_TRIPLET / "retrieval_indices.npy")
     labels = np.load(RUN_FULL / "retrieval_labels.npy")
@@ -154,7 +165,10 @@ class V5Demo:
         tk.Label(nav, text="Query:", bg=BG, fg=TEXT, font=("Segoe UI", 10, "bold")).pack(side="left")
         self.query_var = tk.StringVar()
         self.query_box = ttk.Combobox(nav, textvariable=self.query_var, state="readonly", width=70)
-        self.query_box["values"] = [self.short_name(p, i) for i, p in enumerate(self.data["paths"])]
+        query_names = []
+        for i, p in enumerate(self.data["paths"]):
+            query_names.append(self.short_name(p, i))
+        self.query_box["values"] = query_names
         self.query_box.current(0)
         self.query_box.pack(side="left", padx=8)
         self.query_box.bind("<<ComboboxSelected>>", self.on_select)
@@ -218,7 +232,11 @@ class V5Demo:
         self.render()
 
     def non_self_results(self, indices):
-        return [idx for idx in indices[self.query_idx] if idx != self.query_idx][:TOP_K]
+        results = []
+        for idx in indices[self.query_idx]:
+            if idx != self.query_idx:
+                results.append(idx)
+        return results[:TOP_K]
 
     def clear_grid(self, frame):
         for child in frame.grid_holder.winfo_children():

@@ -25,12 +25,12 @@ class EmbeddingDataset(Dataset):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input-dir", default="runs/v5")
-    parser.add_argument("--output-dir", default="runs/v5")
+    parser.add_argument("--input-dir", default="runs/v7")
+    parser.add_argument("--output-dir", default="runs/v7")
     parser.add_argument("--epochs", type=int, default=80)
     parser.add_argument("--batch-size", type=int, default=32)
-    parser.add_argument("--hidden-dim", type=int, default=512)
-    parser.add_argument("--output-dim", type=int, default=128)
+    parser.add_argument("--hidden-dim", type=int, default=128)
+    parser.add_argument("--output-dim", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.001)
     return parser.parse_args()
 
@@ -51,7 +51,7 @@ def main():
 
     train_emb = np.load(in_dir / "train_embeddings.npy")
     train_lbl = np.load(in_dir / "train_labels.npy")
-    input_dim = train_emb.shape[1]
+    input_dim = train_emb.shape[1]  # 34 (17 keypoints × x,y)
 
     dataset = EmbeddingDataset(train_emb, train_lbl)
     sampler = samplers.MPerClassSampler(

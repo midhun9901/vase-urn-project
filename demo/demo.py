@@ -45,7 +45,11 @@ def load_data():
     """Load all pre-computed npy files and folder lists."""
     # test folder → one representative image path per folder
     with open(os.path.join(BASE, "test_folders.txt")) as f:
-        folders = [ln.strip() for ln in f if ln.strip()]
+        folders = []
+        for ln in f:
+            ln = ln.strip()
+            if ln:
+                folders.append(ln)
 
     labels = np.load(os.path.join(BASE, "test_labels.npy"))
 
@@ -67,11 +71,11 @@ def load_data():
     image_labels = []
     for lbl, folder in enumerate(folders):
         try:
-            imgs = sorted([
-                os.path.join(folder, fn)
-                for fn in os.listdir(folder)
-                if fn.lower().endswith((".jpg", ".jpeg", ".png"))
-            ])
+            img_list = []
+            for fn in os.listdir(folder):
+                if fn.lower().endswith((".jpg", ".jpeg", ".png")):
+                    img_list.append(os.path.join(folder, fn))
+            imgs = sorted(img_list)
             for p in imgs:
                 image_paths.append(p)
                 image_labels.append(lbl)
@@ -98,20 +102,26 @@ def get_thumb(path, w=THUMB_W, h=THUMB_H):
 
 def compute_metrics(indices, labels):
     n = len(labels)
-    ap_list, acc1, acc10 = [], 0, 0
+    ap_list = []
+    acc1 = 0
+    acc10 = 0
     for i in range(n):
         ranked_labels = labels[indices[i][1:]]   # skip self (index 0)
         if ranked_labels[0] == labels[i]:
             acc1 += 1
         if labels[i] in ranked_labels[:10]:
             acc10 += 1
-        correct, precision_sum = 0, 0
+        correct = 0
+        precision_sum = 0
         for rank, lbl in enumerate(ranked_labels):
             if lbl == labels[i]:
                 correct += 1
                 precision_sum += correct / (rank + 1)
         total_relevant = np.sum(labels == labels[i]) - 1
-        ap_list.append(precision_sum / total_relevant if total_relevant > 0 else 0.0)
+        if total_relevant > 0:
+            ap_list.append(precision_sum / total_relevant)
+        else:
+            ap_list.append(0.0)
     return np.mean(ap_list), acc1/n*100, acc10/n*100
 
 
@@ -220,8 +230,10 @@ class DemoApp:
         self.query_cb = ttk.Combobox(nav, textvariable=self.query_var, state="readonly",
                                       width=55, font=("Segoe UI", 10))
         paths = d["image_paths"]
-        folder_labels = [os.path.basename(os.path.dirname(p)) + " / " + os.path.basename(p)
-                         for p in paths]
+        folder_labels = []
+        for p in paths:
+            label = os.path.basename(os.path.dirname(p)) + " / " + os.path.basename(p)
+            folder_labels.append(label)
         self.query_cb["values"] = folder_labels
         self.query_cb.current(0)
         self.query_cb.pack(side="left", padx=10)
@@ -376,7 +388,11 @@ class DemoApp:
             w.destroy()
 
         d = self.data
-        show_indices = [i for i in ranked_indices if i != self.query_idx][:TOP_K]
+        show_indices = []
+        for i in ranked_indices:
+            if i != self.query_idx:
+                show_indices.append(i)
+        show_indices = show_indices[:TOP_K]
 
         COLS = 3
         for pos, rid in enumerate(show_indices):

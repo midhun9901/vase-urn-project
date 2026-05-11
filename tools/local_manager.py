@@ -50,7 +50,9 @@ def run_nvidia_smi():
         ).decode().strip()
         lines = []
         for i, line in enumerate(out.splitlines()):
-            parts = [p.strip() for p in line.split(",")]
+            parts = []
+            for p in line.split(","):
+                parts.append(p.strip())
             if len(parts) == 5:
                 name, util, mem_used, mem_total, temp = parts
                 lines.append(
@@ -463,10 +465,14 @@ class LocalManager:
 
     def view_results(self):
         """Open the most recent log file."""
-        logs = sorted(
-            [f for f in os.listdir(LOG_DIR) if f.endswith(".log")],
-            reverse=True
-        ) if os.path.isdir(LOG_DIR) else []
+        if os.path.isdir(LOG_DIR):
+            all_logs = []
+            for f in os.listdir(LOG_DIR):
+                if f.endswith(".log"):
+                    all_logs.append(f)
+            logs = sorted(all_logs, reverse=True)
+        else:
+            logs = []
         if not logs:
             messagebox.showinfo("No Results", "No log files found yet.")
             return

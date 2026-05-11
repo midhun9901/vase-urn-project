@@ -17,6 +17,7 @@
 | `v4_arcface/` | V4 | SAM crop + ResNet50 + ArcFace Loss |
 | `v5_sam_triplet/` | V5 | SAM crop + ResNet50 + Triplet Loss |
 | `v6_dinov2/` | V6 ★ best | DINOv2 ViT-S/14 + MLP + Triplet Loss |
+| `v7_pose/` | V7 | YOLOv8 skeleton keypoints + Triplet Loss |
 
 ---
 
@@ -24,21 +25,22 @@
 
 | Version | Description | Hardware | mAP | Acc@1 | Acc@10 |
 |---------|-------------|----------|-----|-------|--------|
-| V1 - Baseline | Raw ResNet50 features, no MLP | RTX 3050 (local) | 10.31% | 15.38% | 30.77% |
-| V2 - ResNet50 + Triplet | ResNet50 + MLP + Triplet Loss | A100 (TinyGPU) | 54.04% | 42.31% | 92.31% |
-| V3 - ResNet50 + ProxyAnchor | ResNet50 + MLP + ProxyAnchor Loss | — | not yet run | — | — |
-| V4 - ResNet50 + ArcFace + SAM | SAM crop + ResNet50 + ArcFace Loss | — | not yet run | — | — |
-| V5 - ResNet50 + SAM + Triplet | SAM crop + ResNet50 + Triplet Loss | — | not yet run | — | — |
+| V1 - Baseline | Raw ResNet50 features, no MLP | A100 (TinyGPU) | 15.51% | 15.38% | 28.85% |
+| V2 - ResNet50 + Triplet | ResNet50 + MLP + Triplet Loss | A100 (TinyGPU) | 54.79% | 44.23% | 96.15% |
+| V3 - ResNet50 + ProxyAnchor | ResNet50 + MLP + ProxyAnchor Loss | A100 (TinyGPU) | 57.43% | 44.23% | 96.15% |
+| V4 - SAM crop + ArcFace | SAM crop + ResNet50 + ArcFace Loss | A100 (TinyGPU) | 11.55% | 9.62% | 30.77% |
+| V5 - SAM crop + Triplet | SAM crop + ResNet50 + Triplet Loss | A100 (TinyGPU) | 11.55% | 9.62% | 30.77% |
 | V6a - DINOv2 Full Image | DINOv2 ViT-S/14 + FAISS full ranking | A100 (TinyGPU) | 32.53% | 26.92% | 82.69% |
 | V6b - DINOv2 + Triplet | DINOv2 ViT-S/14 + MLP + Triplet Loss | A100 (TinyGPU) | **83.39%** | **80.77%** | **100.00%** |
+| V7 - Pose + Triplet | YOLOv8 skeleton keypoints + Triplet Loss | A100 (TinyGPU) | 39.76% | 38.46% | 57.69% |
 
 Main result:
 
-> V6b DINOv2 + Triplet Loss is the best current method with 83.39% mAP.
+> V6b DINOv2 + Triplet Loss is the best method with 83.39% mAP and 100% Accuracy@10.
 
-Important fairness note:
+Key finding:
 
-V1 and V2 used the old top-10 evaluator. V6 uses the corrected full-ranking evaluator. Before the final report, re-evaluate V1 and V2 with the same full-ranking evaluator so all versions are directly comparable.
+> SAM cropping (V4, V5) hurts performance — mAP drops below even the baseline. Cropping removes global context that helps retrieval. All versions use the same full-ranking evaluator so results are directly comparable.
 
 ---
 
