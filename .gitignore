@@ -36,3 +36,6 @@ env/
 # Pipeline outputs
 pipeline_baseline/
 pipeline_metric_learning/
+
+# V7 pose assets (large local files: keypoint dataset + detector weights)
+v7_pose/assets/
