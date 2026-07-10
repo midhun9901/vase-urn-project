@@ -6,7 +6,7 @@ import torch
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Download/cache DINOv2 for offline cluster jobs.")
-    parser.add_argument("--torch-home", default="/home/woody/iwi5/iwi5419h/torch_cache")
+    parser.add_argument("--torch-home", default="/home/hpc/iwi5/iwi5419h/torch_cache")
     parser.add_argument("--model-name", default="dinov2_vits14")
     return parser.parse_args()
 

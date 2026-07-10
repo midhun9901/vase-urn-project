@@ -12,8 +12,9 @@ set -e
 unset SLURM_EXPORT_ENV
 module load python
 conda activate vaseretrieval
+export TORCH_HOME=/home/hpc/iwi5/iwi5419h/torch_cache
 
-cd /home/woody/iwi5/iwi5419h/vase_project
+cd /home/hpc/iwi5/iwi5419h/vase_project/vase_urn_project
 
 echo "=== V1: Raw ResNet50 Baseline ==="
 

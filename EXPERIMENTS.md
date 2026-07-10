@@ -3,7 +3,7 @@
 **Project:** CBIR for archaeological vase retrieval  
 **Supervisor:** Mathias Zinnen (FAU)  
 **Branch:** `v5-dinov2-retrieval`  
-**Last updated:** April 26, 2026
+**Last updated:** June 27, 2026
 
 ---
 
@@ -51,8 +51,6 @@ Key finding:
 |-------------|---------|
 | `v6_dinov2/` | DINOv2 feature extraction, training, retrieval, evaluation |
 | `v6_dinov2/job_v6_dinov2.sh` | TinyGPU SLURM job for V6a and V6b |
-| `demo/demo_v5_dinov2.py` | Visual demo for V6a vs V6b |
-| `demo/demo_all_versions.py` | Visual comparison of saved result versions |
 | `runs/dinov2_full/` | V6a generated artifacts (gitignored) |
 | `runs/dinov2_triplet/` | V6b generated artifacts (gitignored) |
 
@@ -104,15 +102,22 @@ Interpretation:
 
 ## TinyGPU Run
 
-DINOv2 must be pre-cached because compute nodes cannot access GitHub:
+Compute nodes have no internet, so model weights must be pre-cached from the
+login node first:
 
 ```text
-Cache location: /home/woody/iwi5/iwi5419h/torch_cache
+Cache location: /home/hpc/iwi5/iwi5419h/torch_cache
 ```
 
-Submit V6:
+```bash
+cd /home/hpc/iwi5/iwi5419h/vase_project/vase_urn_project
+python v6_dinov2/cache_model.py            # DINOv2 (V6)
+# V4/V5 additionally need sam_vit_b.pth in the project root
+# V7 additionally needs yolo11n-pose.pt cached (see v7_pose/README.md)
+```
+
+Submit a version (V6 shown):
 
 ```bash
-cd /home/woody/iwi5/iwi5419h/vase_project
 sbatch.tinygpu v6_dinov2/job_v6_dinov2.sh
 ```

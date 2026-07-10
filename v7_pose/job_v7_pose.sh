@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH --job-name=v7-pose
-#SBATCH --gres=gpu:a100:1
-#SBATCH --partition=a100
+#SBATCH --gres=gpu:1
+#SBATCH --partition=work
 #SBATCH --time=4:00:00
 #SBATCH --output=v7_pose_%j.out
 #SBATCH --error=v7_pose_%j.err

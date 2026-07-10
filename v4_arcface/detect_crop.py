@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument("--crops-dir", default="runs/v4/crops")
     parser.add_argument(
         "--sam-checkpoint",
-        default="/home/woody/iwi5/iwi5419h/vase_project/sam_vit_b.pth",
+        default="/home/hpc/iwi5/iwi5419h/vase_project/vase_urn_project/sam_vit_b.pth",
     )
     return parser.parse_args()
 

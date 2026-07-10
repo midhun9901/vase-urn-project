@@ -12,9 +12,9 @@ set -e
 unset SLURM_EXPORT_ENV
 module load python
 conda activate vaseretrieval
-export TORCH_HOME=/home/woody/iwi5/iwi5419h/torch_cache
+export TORCH_HOME=/home/hpc/iwi5/iwi5419h/torch_cache
 
-cd /home/woody/iwi5/iwi5419h/vase_project
+cd /home/hpc/iwi5/iwi5419h/vase_project/vase_urn_project
 
 echo "=== V6A: DINOv2 full-image retrieval ==="
 python v6_dinov2/extract_features.py --output-dir runs/dinov2_full --model-name dinov2_vits14
