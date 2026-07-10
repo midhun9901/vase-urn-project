@@ -3,7 +3,7 @@
 **Project:** CBIR for archaeological vase retrieval  
 **Supervisor:** Mathias Zinnen (FAU)  
 **Branch:** `v5-dinov2-retrieval`  
-**Last updated:** April 26, 2026
+**Last updated:** July 10, 2026
 
 ---
 
@@ -28,11 +28,17 @@
 | V1 - Baseline | Raw ResNet50 features, no MLP | A100 (TinyGPU) | 15.51% | 15.38% | 28.85% |
 | V2 - ResNet50 + Triplet | ResNet50 + MLP + Triplet Loss | A100 (TinyGPU) | 54.79% | 44.23% | 96.15% |
 | V3 - ResNet50 + ProxyAnchor | ResNet50 + MLP + ProxyAnchor Loss | A100 (TinyGPU) | 57.43% | 44.23% | 96.15% |
-| V4 - SAM crop + ArcFace | SAM crop + ResNet50 + ArcFace Loss | A100 (TinyGPU) | 11.55% | 9.62% | 30.77% |
-| V5 - SAM crop + Triplet | SAM crop + ResNet50 + Triplet Loss | A100 (TinyGPU) | 11.55% | 9.62% | 30.77% |
+| V4 - SAM crop + ArcFace ⚠️ | SAM crop + ResNet50 + ArcFace Loss | A100 (TinyGPU) | 11.55% | 9.62% | 30.77% |
+| V5 - SAM crop + Triplet ⚠️ | SAM crop + ResNet50 + Triplet Loss | A100 (TinyGPU) | 11.55% | 9.62% | 30.77% |
 | V6a - DINOv2 Full Image | DINOv2 ViT-S/14 + FAISS full ranking | A100 (TinyGPU) | 32.53% | 26.92% | 82.69% |
 | V6b - DINOv2 + Triplet | DINOv2 ViT-S/14 + MLP + Triplet Loss | A100 (TinyGPU) | **83.39%** | **80.77%** | **100.00%** |
 | V7 - Pose + Triplet | YOLOv8 skeleton keypoints + Triplet Loss | A100 (TinyGPU) | 39.76% | 38.46% | 57.69% |
+
+> ⚠️ **V4/V5 results are invalid and must be re-run** (July 10, 2026): the original
+> job scripts called `retrieve.py` without `--model-path`, so the trained
+> ArcFace/Triplet heads were never applied — the numbers above measure *raw*
+> ResNet50 features on SAM crops, which is also why V4 and V5 are identical.
+> The job scripts now pass `--model-path`; re-run both to get real numbers.
 
 Main result:
 
@@ -40,7 +46,12 @@ Main result:
 
 Key finding:
 
-> SAM cropping (V4, V5) hurts performance — mAP drops below even the baseline. Cropping removes global context that helps retrieval. All versions use the same full-ranking evaluator so results are directly comparable.
+> Raw (untrained) features on SAM crops (V4/V5 as run) score below even the
+> full-image baseline, suggesting cropping removes global context that helps
+> retrieval — but whether cropping hurts *trained* models is open until the
+> V4/V5 re-run. All versions use the same full-ranking evaluator, and all
+> versions must be run from the same project directory (same
+> `train_folders.txt`/`test_folders.txt`) to be directly comparable.
 
 ---
 
@@ -50,8 +61,6 @@ Key finding:
 |-------------|---------|
 | `v6_dinov2/` | DINOv2 feature extraction, training, retrieval, evaluation |
 | `v6_dinov2/job_v6_dinov2.sh` | TinyGPU SLURM job for V6a and V6b |
-| `demo/demo_v5_dinov2.py` | Visual demo for V6a vs V6b |
-| `demo/demo_all_versions.py` | Visual comparison of saved result versions |
 | `runs/dinov2_full/` | V6a generated artifacts (gitignored) |
 | `runs/dinov2_triplet/` | V6b generated artifacts (gitignored) |
 
@@ -109,9 +118,9 @@ DINOv2 must be pre-cached because compute nodes cannot access GitHub:
 Cache location: /home/woody/iwi5/iwi5419h/torch_cache
 ```
 
-Submit V6:
+Submit V6 (the job script `cd`s into `PROJECT_DIR` itself — check that the
+`PROJECT_DIR` value at the top of the script matches the actual deployment):
 
 ```bash
-cd /home/woody/iwi5/iwi5419h/vase_project
 sbatch.tinygpu v6_dinov2/job_v6_dinov2.sh
 ```

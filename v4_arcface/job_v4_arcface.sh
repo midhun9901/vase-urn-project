@@ -13,7 +13,11 @@ unset SLURM_EXPORT_ENV
 module load python
 conda activate vaseretrieval
 
-cd /home/woody/iwi5/iwi5419h/vase_project
+# Project root on the cluster — edit here if the deployment moves. All versions
+# must use the same directory so they share one train/test split.
+PROJECT_DIR=/home/hpc/iwi5/iwi5419h/vase_project/vase_urn_project
+export VASE_PROJECT_DIR="$PROJECT_DIR"
+cd "$PROJECT_DIR"
 
 echo "=== V4: ResNet50 + ArcFace + SAM Crop ==="
 
@@ -27,7 +31,7 @@ echo "=== STEP 3: Train (ArcFace Loss) ==="
 python v4_arcface/train.py
 
 echo "=== STEP 4: Retrieve ==="
-python v4_arcface/retrieve.py
+python v4_arcface/retrieve.py --input-dir runs/v4 --model-path runs/v4/model.pth
 
 echo "=== STEP 5: Evaluate ==="
 python v4_arcface/evaluate.py

@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 
 import numpy as np
@@ -14,7 +15,7 @@ def parse_args():
     parser.add_argument("--crops-dir", default="runs/v4/crops")
     parser.add_argument(
         "--sam-checkpoint",
-        default="/home/woody/iwi5/iwi5419h/vase_project/sam_vit_b.pth",
+        default=os.environ.get("SAM_CHECKPOINT", "/home/woody/iwi5/iwi5419h/vase_project/sam_vit_b.pth"),
     )
     return parser.parse_args()
 
@@ -57,8 +58,13 @@ def crop_folder(folder, base, crops_dir, mask_generator):
             crop = get_crop(img, mask_generator)
             crop.save(out_path)
         except Exception as e:
-            print(f"  Skipped {f}: {e}")
-            Image.open(f).convert("RGB").save(out_path)
+            print(f"  Cropping failed for {f}: {e}")
+            # Fall back to the uncropped image; the file itself may be unreadable,
+            # so guard again rather than killing the whole job
+            try:
+                Image.open(f).convert("RGB").save(out_path)
+            except Exception as e2:
+                print(f"  Skipped entirely (unreadable): {f}: {e2}")
 
 
 def main():

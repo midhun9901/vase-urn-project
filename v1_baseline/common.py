@@ -9,6 +9,7 @@ import numpy as np
 SEED = 42
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 
+
 def project_root():
     # Use env var override on HPC; fall back to two levels up from this file (project root)
     return Path(os.environ.get("VASE_PROJECT_DIR", Path(__file__).resolve().parents[1]))
@@ -55,28 +56,37 @@ def make_split(base):
     return folders[:split], folders[split:]  # 80% train, 20% test
 
 
+def read_split_file(path, base):
+    folders = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        p = Path(line)
+        # Older split files stored absolute paths; new ones are relative to the project root
+        if not p.is_absolute():
+            p = base / p
+        if not p.is_dir():
+            raise FileNotFoundError(
+                f"Split folder does not exist: {p}\n"
+                f"(listed in {path}; delete train_folders.txt/test_folders.txt to regenerate the split)"
+            )
+        folders.append(p)
+    return folders
+
+
 def load_or_create_split(base):
     train_file = base / "train_folders.txt"
     test_file = base / "test_folders.txt"
 
     # Reuse existing split files so all versions compare against the same train/test partition
     if train_file.exists() and test_file.exists():
-        train = []
-        for line in train_file.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line:
-                train.append(Path(line))
-        test = []
-        for line in test_file.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line:
-                test.append(Path(line))
-        return train, test
+        return read_split_file(train_file, base), read_split_file(test_file, base)
 
-    # First run: create the split and persist it to disk
+    # First run: create the split and persist it, relative to the project root so it is portable
     train, test = make_split(base)
-    train_file.write_text("\n".join(str(p) for p in train), encoding="utf-8")
-    test_file.write_text("\n".join(str(p) for p in test), encoding="utf-8")
+    train_file.write_text("\n".join(str(p.relative_to(base)) for p in train), encoding="utf-8")
+    test_file.write_text("\n".join(str(p.relative_to(base)) for p in test), encoding="utf-8")
     return train, test
 
 
@@ -93,6 +103,7 @@ def l2_normalize(x, eps=1e-12):
     # Divide each row vector by its L2 norm; eps prevents division by zero for zero vectors
     norms = np.linalg.norm(x, axis=1, keepdims=True)
     return x / np.maximum(norms, eps)
+
 
 def save_paths(path, paths):
     # Write one absolute image path per line, used later to map retrieval results back to files

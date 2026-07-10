@@ -1,0 +1,13 @@
+# Core (all versions)
+numpy
+Pillow
+torch
+torchvision
+faiss-cpu            # use faiss-gpu on the cluster if available
+pytorch-metric-learning
+
+# V4 / V5 only (SAM cropping)
+segment-anything     # pip install git+https://github.com/facebookresearch/segment-anything.git
+
+# V7 only (pose keypoints)
+ultralytics

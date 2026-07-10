@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument("--output-dir", default="runs/dinov2_full")
     parser.add_argument("--model-name", default="dinov2_vits14")
     parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--torch-home", default="/home/woody/iwi5/iwi5419h/torch_cache")
+    parser.add_argument("--torch-home", default=os.environ.get("TORCH_HOME", "/home/woody/iwi5/iwi5419h/torch_cache"))
     return parser.parse_args()
 
 

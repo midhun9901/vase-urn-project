@@ -1,0 +1,17 @@
+# Normalize line endings: LF in the repo and in working trees, so shell
+# scripts and Python files copied to the Linux cluster always run.
+* text=auto
+*.py text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Never touch binary artifacts
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.npy binary
+*.pth binary
+*.pt binary
