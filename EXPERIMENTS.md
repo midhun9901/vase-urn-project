@@ -17,7 +17,7 @@
 | `v4_arcface/` | V4 | SAM crop + ResNet50 + ArcFace Loss |
 | `v5_sam_triplet/` | V5 | SAM crop + ResNet50 + Triplet Loss |
 | `v6_dinov2/` | V6 ★ best | DINOv2 ViT-S/14 + MLP + Triplet Loss |
-| `v7_pose/` | V7 | YOLOv8 skeleton keypoints + Triplet Loss |
+| `v7_pose/` | V7 | Pose keypoints + Triplet Loss (generic COCO → vase-tuned V7b) |
 
 ---
 
@@ -32,7 +32,8 @@
 | V5 - SAM crop + Triplet ⚠️ | SAM crop + ResNet50 + Triplet Loss | A100 (TinyGPU) | 11.55% | 9.62% | 30.77% |
 | V6a - DINOv2 Full Image | DINOv2 ViT-S/14 + FAISS full ranking | A100 (TinyGPU) | 32.53% | 26.92% | 82.69% |
 | V6b - DINOv2 + Triplet | DINOv2 ViT-S/14 + MLP + Triplet Loss | A100 (TinyGPU) | **83.39%** | **80.77%** | **100.00%** |
-| V7 - Pose + Triplet | YOLOv8 skeleton keypoints + Triplet Loss | A100 (TinyGPU) | 39.76% | 38.46% | 57.69% |
+| V7 - Generic Pose + Triplet | Off-the-shelf YOLOv8 (COCO human) keypoints + Triplet Loss | A100 (TinyGPU) | 39.76% | 38.46% | 57.69% |
+| V7b - Vase Figure-Pose + Triplet | YOLOv11 fine-tuned on vase keypoints + Triplet Loss | RTX 3080 (TinyGPU) | 45.55% | 38.46% | 67.31% |
 
 > ⚠️ **V4/V5 results are invalid and must be re-run** (July 10, 2026): the original
 > job scripts called `retrieve.py` without `--model-path`, so the trained
@@ -112,10 +113,11 @@ Interpretation:
 
 ## TinyGPU Run
 
-DINOv2 must be pre-cached because compute nodes cannot access GitHub:
+Compute nodes have no internet, so model weights must be pre-cached from the
+login node first:
 
 ```text
-Cache location: /home/woody/iwi5/iwi5419h/torch_cache
+Cache location: /home/hpc/iwi5/iwi5419h/torch_cache
 ```
 
 Submit V6 (the job script `cd`s into `PROJECT_DIR` itself — check that the
