@@ -15,7 +15,7 @@ pipeline layout. See [EXPERIMENTS.md](EXPERIMENTS.md) for results.
 | `v4_arcface/` | SAM crop + ResNet50 + ArcFace Loss |
 | `v5_sam_triplet/` | SAM crop + ResNet50 + Triplet Loss |
 | `v6_dinov2/` | DINOv2 ViT-S/14 + MLP + Triplet Loss (best) |
-| `v7_pose/` | YOLOv8 skeleton keypoints + Triplet Loss |
+| `v7_pose/` | Vase-tuned YOLOv11 Figure-Pose keypoints + Triplet Loss |
 
 Each folder contains `extract_features.py` → (`train.py`) → `retrieve.py` →
 `evaluate.py`, a `common.py` (identical in every folder so each folder stays
