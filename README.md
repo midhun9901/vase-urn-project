@@ -6,6 +6,11 @@ of the same vase across two parts of the Hamilton engravings dataset.
 **Best result:** 83.39% mAP · 80.77% Accuracy@1 · 100% Accuracy@10
 **Best pipeline:** DINOv2 ViT-S/14 features + learned metric embedding + Triplet Loss
 
+![Comparison of valid vase retrieval experiments](results.svg)
+
+The chart uses the held-out results recorded in this repository. V6b improves
+mAP by 50.86 percentage points over raw DINOv2 features.
+
 This work was carried out at FAU under the supervision of Mathias Zinnen.
 
 ## The problem
