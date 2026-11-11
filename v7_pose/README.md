@@ -47,6 +47,10 @@ Or submit the whole thing: `sbatch.tinygpu v7_pose/job_v7_pose.sh`.
 
 ## Notes
 
+- `train_pose.py` excludes retrieval-test images from the pose pool by SHA-256
+  hash or case-insensitive filename before it creates the 85/15
+  train/validation split. It records the excluded paths and aborts if any
+  overlap remains.
 - `extract_features.py` prints how many images yielded a detected figure — watch
   this; if it is still low after fine-tuning, pose is genuinely sparse on this
   data and the negative-result framing stands.

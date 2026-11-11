@@ -7,7 +7,7 @@ import numpy as np
 
 # Fixed seed so train/test split is reproducible across runs and machines
 SEED = 42
-IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
 
 
 def project_root():
@@ -49,7 +49,7 @@ def make_split(base):
         root_folders = sorted(root_folders, key=lambda p: p.name)
         folders.extend(root_folders)
 
-    # Split at folder level (not image level) so all images of a vase go to the same partition
+    # Split at folder level so every image with the same class label stays in one partition
     random.seed(SEED)
     random.shuffle(folders)
     split = int(0.8 * len(folders))

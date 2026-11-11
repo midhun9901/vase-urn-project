@@ -44,3 +44,6 @@ v7_pose/assets/
 report/fonts/
 report/figures/
 report/*.pdf
+
+# Local validation and rendering scratch files
+tmp/

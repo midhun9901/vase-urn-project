@@ -47,7 +47,7 @@ def crop_folder(folder, base, crops_dir, mask_generator):
     out_folder.mkdir(parents=True, exist_ok=True)
     files = []
     for f in Path(folder).iterdir():
-        if f.suffix.lower() in {".jpg", ".jpeg", ".png"}:
+        if f.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}:
             files.append(f)
     for f in files:
         out_path = out_folder / f.name

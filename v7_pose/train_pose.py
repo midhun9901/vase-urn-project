@@ -13,10 +13,11 @@ image files (YOLO finds each label by swapping `images` -> `labels`).
 """
 
 import argparse
+import hashlib
 import random
 from pathlib import Path
 
-from common import SEED, IMAGE_EXTS, project_root
+from common import SEED, IMAGE_EXTS, image_files, load_or_create_split, project_root
 
 # COCO-style 17-keypoint left/right swap, used for horizontal-flip augmentation.
 COCO_FLIP_IDX = [0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15]
@@ -40,6 +41,35 @@ def parse_args():
 def list_images(images_dir):
     files = [p for p in images_dir.rglob("*") if p.suffix.lower() in IMAGE_EXTS]
     return sorted(files, key=lambda p: p.name.lower())
+
+
+def file_digest(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def exclude_retrieval_test_images(base, pose_images):
+    _, test_folders = load_or_create_split(base)
+    retrieval_test = [image for folder in test_folders for image in image_files(folder)]
+    held_out_hashes = {file_digest(path) for path in retrieval_test}
+    held_out_names = {path.name.casefold() for path in retrieval_test}
+    pose_hashes = {path: file_digest(path) for path in pose_images}
+    kept = [
+        path for path in pose_images
+        if pose_hashes[path] not in held_out_hashes
+        and path.name.casefold() not in held_out_names
+    ]
+    kept_set = set(kept)
+    excluded = [path for path in pose_images if path not in kept_set]
+
+    remaining_hashes = held_out_hashes.intersection(pose_hashes[path] for path in kept)
+    remaining_names = held_out_names.intersection(path.name.casefold() for path in kept)
+    if remaining_hashes or remaining_names:
+        raise RuntimeError("Retrieval-test images remain in the pose training pool")
+    return kept, excluded, retrieval_test
 
 
 def write_yaml(path, train_txt, val_txt):
@@ -67,9 +97,20 @@ def main():
     out_dir = base / args.output_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    images = list_images(images_dir)
-    if not images:
+    pose_images = list_images(images_dir)
+    if not pose_images:
         raise FileNotFoundError(f"No images found under {images_dir}")
+
+    images, excluded, retrieval_test = exclude_retrieval_test_images(base, pose_images)
+    if not images:
+        raise RuntimeError("No pose-training images remain after test-overlap removal")
+    (out_dir / "excluded_retrieval_test_images.txt").write_text(
+        "\n".join(str(path) for path in excluded), encoding="utf-8"
+    )
+    print(
+        f"Leakage guard: excluded {len(excluded)} pose images matching by hash or name to "
+        f"{len(retrieval_test)} retrieval-test images"
+    )
 
     # deterministic train/val split (absolute paths; YOLO maps images->labels)
     random.seed(SEED)
@@ -78,7 +119,10 @@ def main():
     n_val = max(1, int(args.val_frac * len(shuffled)))
     val_imgs = shuffled[:n_val]
     train_imgs = shuffled[n_val:]
-    print(f"Dataset: {len(images)} images -> {len(train_imgs)} train / {len(val_imgs)} val")
+    print(
+        f"Leakage-free pose pool: {len(images)} images -> "
+        f"{len(train_imgs)} train / {len(val_imgs)} val"
+    )
 
     train_txt = out_dir / "pose_train.txt"
     val_txt = out_dir / "pose_val.txt"

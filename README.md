@@ -3,13 +3,15 @@
 A computer-vision research project for matching different historical depictions
 of the same vase across two parts of the Hamilton engravings dataset.
 
-**Best result:** 83.39% mAP · 80.77% Accuracy@1 · 100% Accuracy@10
+**Best result:** 78.26% mAP · 77.36% Accuracy@1 · 100% Accuracy@10 (53 held-out queries)
 **Best pipeline:** DINOv2 ViT-S/14 features + learned metric embedding + Triplet Loss
 
 ![Comparison of valid vase retrieval experiments](results.svg)
 
-The chart uses the held-out results recorded in this repository. V6b improves
-mAP by 50.86 percentage points over raw DINOv2 features.
+The chart uses the clean held-out reruns of 4 September 2026 on all 253 supplied images
+(200 training and 53 test images across 80 and 21 vase folders). V6b improves mAP by
+45.60 percentage points over raw DINOv2 features. Earlier figures from a 250-image
+loader (for example 83.39% mAP for V6b) were superseded by these reruns.
 
 This work was carried out at FAU under the supervision of Mathias Zinnen.
 
@@ -46,24 +48,32 @@ superseded runs, is in [EXPERIMENTS.md](EXPERIMENTS.md).
 
 | Version | Method | mAP | Acc@1 | Acc@10 |
 |---|---|---:|---:|---:|
-| V1 | Raw ResNet50 features | 15.51% | 15.38% | 28.85% |
-| V2 | ResNet50 + MLP + Triplet Loss | 54.79% | 44.23% | 96.15% |
-| V3 | ResNet50 + MLP + ProxyAnchor | 57.43% | 44.23% | 96.15% |
-| V6a | Raw DINOv2 full-image features | 32.53% | 26.92% | 82.69% |
-| **V6b** | **DINOv2 + MLP + Triplet Loss** | **83.39%** | **80.77%** | **100.00%** |
-| V7b | Vase-tuned YOLOv11 pose + Triplet Loss | 45.55% | 38.46% | 67.31% |
+| V1 | Raw ResNet50 features | 15.51% | 15.09% | 30.19% |
+| V2 | ResNet50 + MLP + Triplet Loss | 50.70% | 43.40% | 84.91% |
+| V3 | ResNet50 + MLP + ProxyAnchor | 58.87% | 52.83% | 88.68% |
+| V6a | Raw DINOv2 full-image features | 32.66% | 26.42% | 83.02% |
+| **V6b** | **DINOv2 + MLP + Triplet Loss** | **78.26%** | **77.36%** | **100.00%** |
+| V7 | Generic COCO pose (YOLOv8) + Triplet Loss | 36.93% | 33.96% | 67.92% |
 
 The main result is not simply that DINOv2 is a stronger backbone. Raw DINOv2
-features reached 32.53% mAP; adapting them to the actual retrieval task with a
-learned 128-dimensional embedding raised mAP to 83.39%.
+features reached 32.66% mAP; adapting them to the actual retrieval task with a
+learned 128-dimensional embedding raised mAP to 78.26%. The test set is small (53 queries), so
+differences of a few points between runs should not be over-interpreted.
 
-### An important negative result
+### Important negative results
 
 The recorded V4/V5 SAM-crop scores are marked invalid. Their original job
 scripts omitted `--model-path`, so evaluation used the raw backbone instead of
 the trained heads. The scripts are corrected, but those two runs still need to
 be repeated. I keep this failure in the experiment record rather than presenting
 the numbers as a valid comparison.
+
+The earlier vase-tuned YOLOv11 pose score (45.55% mAP, V7b) is excluded for a second
+reason: an audit on 3 September 2026 found that its pose-training pool overlapped the
+retrieval test set (51 byte-identical test images plus one same-named image, 52 in
+total; 44 entered pose training and eight entered pose validation). `v7_pose/train_pose.py`
+now removes such matches before splitting and aborts if any remain. The clean rerun is
+still pending, so V7 above is the generic off-the-shelf pose baseline.
 
 ## Repository guide
 

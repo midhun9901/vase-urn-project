@@ -1,0 +1,27 @@
+{
+  "dataset": {
+    "folder_classes": 101,
+    "images": 253,
+    "train_folder_classes": 80,
+    "train_images": 200,
+    "test_folder_classes": 21,
+    "test_images": 53,
+    "supported_extensions": [".jpg", ".jpeg", ".png", ".bmp"]
+  },
+  "environment": {
+    "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+    "torch": "2.5.1+cu121",
+    "torchvision": "0.20.1+cu121",
+    "faiss": "1.13.2",
+    "pytorch_metric_learning": "2.9.0",
+    "ultralytics": "8.4.33"
+  },
+  "clean_runs": {
+    "V1": {"mAP": 0.15506958074505497, "Accuracy@1": 15.09433962264151, "Accuracy@10": 30.18867924528302},
+    "V2": {"mAP": 0.5069846955216217, "Accuracy@1": 43.39622641509434, "Accuracy@10": 84.90566037735849},
+    "V3": {"mAP": 0.5886564214351037, "Accuracy@1": 52.83018867924528, "Accuracy@10": 88.67924528301887},
+    "V6a": {"mAP": 0.32658428764392294, "Accuracy@1": 26.41509433962264, "Accuracy@10": 83.01886792452831},
+    "V6b": {"mAP": 0.7826029445951754, "Accuracy@1": 77.35849056603774, "Accuracy@10": 100.0},
+    "V7": {"mAP": 0.36929873415270753, "Accuracy@1": 33.9622641509434, "Accuracy@10": 67.9245283018868}
+  }
+}

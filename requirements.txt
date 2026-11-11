@@ -1,13 +1,13 @@
 # Core (all versions)
-numpy
-Pillow
-torch
-torchvision
-faiss-cpu            # use faiss-gpu on the cluster if available
-pytorch-metric-learning
+numpy==1.26.4
+Pillow==12.1.1
+torch==2.5.1
+torchvision==0.20.1
+faiss-cpu==1.13.2    # use a compatible faiss-gpu build on the cluster
+pytorch-metric-learning==2.9.0
 
 # V4 / V5 only (SAM cropping)
 segment-anything     # pip install git+https://github.com/facebookresearch/segment-anything.git
 
 # V7 only (pose keypoints)
-ultralytics
+ultralytics==8.4.33
